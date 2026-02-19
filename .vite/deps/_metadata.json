@@ -1,0 +1,21 @@
+{
+  "hash": "ed463915",
+  "configHash": "4728dc34",
+  "lockfileHash": "21e76258",
+  "browserHash": "5e8e33a4",
+  "optimized": {
+    "three": {
+      "src": "../../node_modules/three/build/three.module.js",
+      "file": "three.js",
+      "fileHash": "3595cced",
+      "needsInterop": false
+    },
+    "cannon-es": {
+      "src": "../../node_modules/cannon-es/dist/cannon-es.js",
+      "file": "cannon-es.js",
+      "fileHash": "f0e9d33e",
+      "needsInterop": false
+    }
+  },
+  "chunks": {}
+}
