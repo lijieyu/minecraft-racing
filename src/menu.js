@@ -1,4 +1,5 @@
 import { CHARACTERS } from './characters.js';
+import { TRACKS } from './track.js';
 
 const PIXEL_FONT = `'Courier New', monospace`;
 const MC_GREEN = '#4a4';
@@ -52,6 +53,7 @@ export class Menu {
     this.onStart = onStart;
     this.selectedChar = 0;
     this.selectedSpeed = 1;
+    this.selectedMap = 0;
     this.el = document.createElement('div');
     this.el.id = 'menu';
     this.el.style.cssText = `
@@ -87,7 +89,34 @@ export class Menu {
     `;
     const btn = this.el.querySelector('#btn-start');
     addBtnFx(btn);
-    btn.onclick = () => this._renderSpeedSelect();
+    btn.onclick = () => this._renderMapSelect();
+  }
+
+  _renderMapSelect() {
+    this.el.innerHTML = `
+      <h2 style="font-size:32px;letter-spacing:3px;text-shadow:2px 2px 0 #000;margin-bottom:30px;color:#ff0">
+        🗺️ 选择赛道 🗺️</h2>
+      <div id="map-grid" style="display:flex;gap:16px;margin-bottom:30px;justify-content:center"></div>
+      <button id="btn-next" style="${btnBase}">下一步 ➡️</button>
+    `;
+    const grid = this.el.querySelector('#map-grid');
+    TRACKS.forEach((t, i) => {
+      const sel = i === this.selectedMap;
+      const card = document.createElement('div');
+      card.style.cssText = `
+        width:150px;padding:24px 16px;text-align:center;cursor:pointer;
+        border:3px solid ${sel ? '#5f5' : '#444'};border-radius:4px;
+        background:${sel ? 'rgba(80,255,80,0.15)' : 'rgba(255,255,255,0.05)'};
+        transition:transform 0.15s;
+        ${sel ? 'transform:scale(1.08);box-shadow:0 0 20px rgba(80,255,80,0.3);' : ''}
+      `;
+      card.innerHTML = `<div style="font-size:22px;color:${sel ? '#5f5' : '#ccc'}">${t.name}</div>`;
+      card.onclick = () => { this.selectedMap = i; this._renderMapSelect(); };
+      grid.appendChild(card);
+    });
+    const btn = this.el.querySelector('#btn-next');
+    addBtnFx(btn);
+    btn.onclick = () => this._renderCharSelect();
   }
 
   _renderSpeedSelect() {
@@ -114,7 +143,7 @@ export class Menu {
     });
     const btn = this.el.querySelector('#btn-next');
     addBtnFx(btn);
-    btn.onclick = () => this._renderCharSelect();
+    btn.onclick = () => this._renderMapSelect();
   }
 
   _renderCharSelect() {
@@ -146,7 +175,7 @@ export class Menu {
     });
     const btn = this.el.querySelector('#btn-go');
     addBtnFx(btn);
-    btn.onclick = () => { this.hide(); this.onStart(this.selectedChar, SPEED_LEVELS[this.selectedSpeed]); };
+    btn.onclick = () => { this.hide(); this.onStart(this.selectedChar, SPEED_LEVELS[this.selectedSpeed], this.selectedMap); };
   }
 
   hide() { this.el.style.display = 'none'; }

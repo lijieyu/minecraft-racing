@@ -35,12 +35,21 @@ export class HUD {
           <span id="hud-item-icon">❓</span>
         </div>
         <div id="hud-item-name" style="font-size:14px;color:#aaa;min-width:60px">No Item</div>
-      </div>
+        <div style="width:1px;background:#444;height:40px;margin:0 4px"></div>
+        <div id="hud-skill-box" style="width:52px;height:52px;border:2px solid #555;border-radius:6px;
+          background:rgba(60,60,60,0.8);display:flex;align-items:center;justify-content:center;font-size:28px">
+          <span id="hud-skill-icon">⚡</span>
+        </div>
+        <div>
+          <div id="hud-skill-name" style="font-size:13px;color:#aaa">技能</div>
+          <div id="hud-skill-cd" style="font-size:12px;color:#5f5;font-weight:bold">就绪</div>
+          <div style="font-size:10px;color:#666">双击空格</div>
+        </div>
     `;
     document.getElementById('ui-layer').appendChild(this.el);
   }
 
-  update(speed, lap, totalLaps, rank, item, countdown) {
+  update(speed, lap, totalLaps, rank, item, countdown, skill) {
     document.getElementById('hud-speed').textContent = Math.round(speed);
     document.getElementById('hud-speed-fill').style.width = Math.min(100, (speed / 45) * 100) + '%';
     const pct = speed / 45;
@@ -64,6 +73,16 @@ export class HUD {
     document.getElementById('hud-item-box').style.borderColor = item ? '#5f5' : '#555';
 
     document.getElementById('hud-countdown').textContent = countdown || '';
+
+    if (skill) {
+      document.getElementById('hud-skill-icon').textContent = skill.icon;
+      document.getElementById('hud-skill-name').textContent = skill.name;
+      const cd = document.getElementById('hud-skill-cd');
+      const ready = skill.cooldown <= 0;
+      cd.textContent = ready ? '就绪' : Math.ceil(skill.cooldown) + 's';
+      cd.style.color = ready ? '#5f5' : '#fa8';
+      document.getElementById('hud-skill-box').style.borderColor = ready ? '#5f5' : '#555';
+    }
   }
 
   hide() { this.el.style.display = 'none'; }

@@ -5,7 +5,7 @@ export class AIController {
     this.targetIdx = 1;
     this.useItemTimer = 3 + Math.random() * 5;
     // Vary AI speed so they don't bunch
-    this.vehicle.maxSpeed = 35 + Math.random() * 15;
+    this.vehicle.maxSpeed *= 0.85 + Math.random() * 0.3;
   }
 
   update(dt, weapons, allVehicles) {

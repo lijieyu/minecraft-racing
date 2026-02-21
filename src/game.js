@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import { buildTrack, generateTrackPoints, getCheckpoints, TRACK_WIDTH } from './track.js';
+import { buildTrack, generateTrackPoints, getCheckpoints, TRACK_WIDTH, TRACKS } from './track.js';
 import { Vehicle } from './vehicle.js';
 import { AIController } from './ai.js';
 import { WeaponSystem } from './weapons.js';
@@ -17,7 +17,7 @@ export class Game {
     this.allVehicles = []; this.weapons = null; this.particles = null;
     this.hud = null; this.trackPoints = []; this.checkpoints = [];
     this.itemBoxes = []; this.keys = {};
-    this.totalLaps = 3; this.countdown = 3;
+    this.totalLaps = 5; this.countdown = 3;
     this.raceStarted = false; this.raceFinished = false;
     this.clock = new THREE.Clock();
   }
@@ -32,14 +32,18 @@ export class Game {
     return minDist < 400 ? height : 0;
   }
 
-  init(playerCharIdx, speedCfg) {
+  init(playerCharIdx, speedCfg, mapIdx = 0) {
     this.speedCfg = speedCfg;
+    this.mapIdx = mapIdx;
     this._setupRenderer();
     this._setupPhysics();
     this._setupScene();
-    this.trackPoints = generateTrackPoints();
+    this.trackPoints = generateTrackPoints(mapIdx);
     this.checkpoints = getCheckpoints(this.trackPoints);
-    buildTrack(this.scene, this.world);
+    buildTrack(this.scene, this.world, mapIdx);
+    const fogColor = TRACKS[mapIdx].fogColor;
+    this.scene.fog = new THREE.Fog(fogColor, 100, 400);
+    this.scene.background = new THREE.Color(fogColor);
     this.particles = new ParticleSystem(this.scene);
     this.weapons = new WeaponSystem(this.scene, this.world, this.particles);
     this.hud = new HUD();
@@ -110,33 +114,102 @@ export class Game {
 
   _spawnItemBoxes() {
     const step = Math.floor(this.trackPoints.length / 10);
+    const canvas = document.createElement('canvas');
+    canvas.width = 32; canvas.height = 32;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffcc00'; ctx.fillRect(0, 0, 32, 32);
+    ctx.fillStyle = '#cc8800'; ctx.fillRect(0,0,32,2); ctx.fillRect(0,30,32,2);
+    ctx.fillRect(0,0,2,32); ctx.fillRect(30,0,2,32);
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 22px monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('?', 16, 17);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.magFilter = THREE.NearestFilter;
+    const geo = new THREE.BoxGeometry(1.8, 1.8, 1.8);
+    const mat = new THREE.MeshLambertMaterial({ map: tex });
+
     for (let i = 0; i < 10; i++) {
-      const p = this.trackPoints[i * step];
-      // Mystery box with ? mark texture
-      const canvas = document.createElement('canvas');
-      canvas.width = 32; canvas.height = 32;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#ffcc00'; ctx.fillRect(0, 0, 32, 32);
-      ctx.fillStyle = '#cc8800'; ctx.fillRect(0, 0, 32, 2); ctx.fillRect(0, 30, 32, 2);
-      ctx.fillRect(0, 0, 2, 32); ctx.fillRect(30, 0, 2, 32);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 22px monospace';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('?', 16, 17);
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.magFilter = THREE.NearestFilter;
-      const geo = new THREE.BoxGeometry(1.8, 1.8, 1.8);
-      const mat = new THREE.MeshLambertMaterial({ map: tex });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(p.x, p.y + 2, p.z);
-      mesh.castShadow = true;
-      this.scene.add(mesh);
-      this.itemBoxes.push({ mesh, active: true, respawnTimer: 0, baseY: p.y + 2, phase: i * 0.7 });
+      const idx = i * step;
+      const p = this.trackPoints[idx];
+      const np = this.trackPoints[(idx + 1) % this.trackPoints.length];
+      const right = new THREE.Vector3(-(np.z - p.z), 0, np.x - p.x).normalize();
+      for (let j = -1; j <= 1; j++) {
+        const mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(p.x + right.x * j * 3.5, p.y + 2, p.z + right.z * j * 3.5);
+        mesh.castShadow = true;
+        this.scene.add(mesh);
+        this.itemBoxes.push({ mesh, active: true, respawnTimer: 0, baseY: p.y + 2, phase: i * 0.7 + j });
+      }
     }
   }
 
   _setupInput() {
-    window.addEventListener('keydown', e => { this.keys[e.code] = true; });
+    let lastSpaceDown = 0;
+    let itemUseTimer = null;
+    window.addEventListener('keydown', e => {
+      this.keys[e.code] = true;
+      if (e.code === 'Space') {
+        const now = Date.now();
+        if (now - lastSpaceDown < 300) {
+          clearTimeout(itemUseTimer);
+          this._useSkill();
+        } else {
+          itemUseTimer = setTimeout(() => {
+            if (!this.player || !this.raceStarted || this.raceFinished) return;
+            if (this.player.currentItem) {
+              this.weapons.use(this.player.currentItem, this.player, this.allVehicles);
+              this.player.currentItem = null;
+            }
+          }, 250);
+        }
+        lastSpaceDown = now;
+      }
+    });
     window.addEventListener('keyup', e => { this.keys[e.code] = false; });
+  }
+
+  _useSkill() {
+    if (!this.raceStarted || this.raceFinished) return;
+    const p = this.player;
+    if (p.skillCooldown > 0) return;
+    const id = p.charDef.id;
+    const pp = p.getPosition();
+
+    if (id === 'steve') {
+      p.boostTimer = 3;
+    } else if (id === 'alex') {
+      const target = [...this.allVehicles]
+        .filter(v => v !== p && v.trackProgress > p.trackProgress)
+        .sort((a, b) => a.trackProgress - b.trackProgress)[0]
+        || [...this.allVehicles].filter(v => v !== p).sort((a, b) => b.trackProgress - a.trackProgress)[0];
+      if (target) { target.slowTimer = 4; this.particles.emitPickup(target.getPosition().clone()); }
+    } else if (id === 'creeper') {
+      for (const v of this.allVehicles) {
+        if (v === p) continue;
+        const vp = v.getPosition();
+        if (Math.hypot(vp.x - pp.x, vp.z - pp.z) < 22) v.slowTimer = 3;
+      }
+      p.boostTimer = 1.5;
+      this.particles.emitPickup(new THREE.Vector3(pp.x, pp.y + 1, pp.z));
+    } else if (id === 'enderman') {
+      const ahead = [...this.allVehicles]
+        .filter(v => v !== p && v.trackProgress > p.trackProgress)
+        .sort((a, b) => b.trackProgress - a.trackProgress)[0];
+      if (ahead) {
+        const lp = ahead.getPosition();
+        const fw = ahead.getForward();
+        p.setPosition(lp.x - fw.x * 8, lp.y, lp.z - fw.z * 8);
+        p.setHeading(ahead.heading);
+        p.speed = ahead.speed * 0.8;
+      } else {
+        // Already 1st: jump forward to next checkpoint
+        const tp = this.trackPoints[(p.nextCheckpoint * Math.floor(this.trackPoints.length / this.checkpoints.length)) % this.trackPoints.length];
+        p.setPosition(tp.x, tp.y + 0.5, tp.z);
+        p.speed = p.maxSpeed * 0.8;
+      }
+      this.particles.emitPickup(p.getPosition().clone());
+    }
+    p.skillCooldown = 10;
   }
 
   _animate() {
@@ -148,7 +221,7 @@ export class Game {
       if (this.countdown > 0) {
         this.countdown -= dt;
         const cd = Math.ceil(Math.max(0, this.countdown));
-        this.hud.update(0, 0, this.totalLaps, 1, null, cd > 0 ? cd : 'GO!');
+        this.hud.update(0, 0, this.totalLaps, 1, null, cd > 0 ? cd : 'GO!', null);
         this._updateCamera();
         this.renderer.render(this.scene, this.camera);
         return;
@@ -170,7 +243,10 @@ export class Game {
       this._updateCamera();
 
       const speed = this.player.getSpeed();
-      this.hud.update(speed, this.player.lap, this.totalLaps, this.player.rank, this.player.currentItem, '');
+      const skill = this.player.charDef.skill
+        ? { ...this.player.charDef.skill, cooldown: this.player.skillCooldown }
+        : null;
+      this.hud.update(speed, this.player.lap, this.totalLaps, this.player.rank, this.player.currentItem, '', skill);
 
       if (this.raceStarted && speed > 5) {
         const pp = this.player.getPosition();
@@ -195,11 +271,6 @@ export class Game {
     const left = k['KeyA'] || k['ArrowLeft'];
     const right = k['KeyD'] || k['ArrowRight'];
     this.player.applyInput(accel, brake, (right ? 1 : 0) - (left ? 1 : 0), dt);
-    if (k['Space'] && this.player.currentItem) {
-      this.weapons.use(this.player.currentItem, this.player, this.allVehicles);
-      this.player.currentItem = null;
-      k['Space'] = false;
-    }
   }
 
   _updateCamera() {

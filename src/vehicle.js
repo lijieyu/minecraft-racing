@@ -17,6 +17,8 @@ export class Vehicle {
     this.heading = 0;
     this.currentItem = null;
     this.slowTimer = 0;
+    this.skillCooldown = 0;
+    this.boostTimer = 0;
     this.lap = 0;
     this.nextCheckpoint = 0;
     this.finished = false;
@@ -154,6 +156,8 @@ export class Vehicle {
   applyInput(accel, brake, steerDir, dt) {
     const slowMult = this.slowTimer > 0 ? 0.4 : 1.0;
     if (this.slowTimer > 0) this.slowTimer -= dt;
+    const boostMult = this.boostTimer > 0 ? 1.5 : 1.0;
+    if (this.boostTimer > 0) this.boostTimer -= dt;
 
     if (accel) this.speed += this.acceleration * dt;
     else if (brake) this.speed -= this.braking * dt;
@@ -161,7 +165,7 @@ export class Vehicle {
       if (this.speed > 0) this.speed = Math.max(0, this.speed - this.friction * dt);
       else if (this.speed < 0) this.speed = Math.min(0, this.speed + this.friction * dt);
     }
-    this.speed = Math.max(-15, Math.min(this.maxSpeed * slowMult, this.speed));
+    this.speed = Math.max(-15, Math.min(this.maxSpeed * slowMult * boostMult, this.speed));
 
     if (Math.abs(this.speed) > 1) {
       this.heading += steerDir * this.turnSpeed * dt * (this.speed > 0 ? 1 : -1);
@@ -171,6 +175,7 @@ export class Vehicle {
   }
 
   update(dt, getGroundHeight) {
+    if (this.skillCooldown > 0) this.skillCooldown -= dt;
     const fw = this.getForward();
     this.pos.x += fw.x * this.speed * dt;
     this.pos.z += fw.z * this.speed * dt;
