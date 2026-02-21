@@ -182,14 +182,15 @@ export class Menu {
 
   showResults(rank, onRestart) {
     this.el.style.display = 'flex';
-    const sfx = ['st','nd','rd','th'];
-    const colors = ['#ffd700','#c0c0c0','#cd7f32','#aaa'];
-    const trophies = ['🏆','🥈','🥉','🏅'];
+    const sfx = ['st', 'nd', 'rd', 'th'];
+    const colors = ['#ffd700', '#c0c0c0', '#cd7f32', '#aaa'];
+    const trophies = ['🏆', '🥈', '🥉', ''];
+    const trophy = rank <= 3 ? trophies[rank - 1] : '';
     this.el.innerHTML = `
       <div style="text-align:center">
-        <div style="font-size:72px;margin-bottom:10px">${trophies[Math.min(rank-1,3)]}</div>
+        <div style="font-size:72px;margin-bottom:10px">${trophy}</div>
         <h1 style="font-size:44px;text-shadow:3px 3px 0 #000;margin-bottom:10px">🏁 比赛结束！</h1>
-        <h2 style="font-size:48px;color:${colors[Math.min(rank-1,3)]};text-shadow:3px 3px 0 #000;margin-bottom:40px">
+        <h2 style="font-size:48px;color:${colors[Math.min(rank - 1, 3)]};text-shadow:3px 3px 0 #000;margin-bottom:40px">
           第 ${rank} 名！
         </h2>
         <div style="display:flex;gap:20px;justify-content:center">
