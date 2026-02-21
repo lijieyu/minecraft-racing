@@ -104,13 +104,13 @@ export class Menu {
       const sel = i === this.selectedMap;
       const card = document.createElement('div');
       card.style.cssText = `
-        width:150px;padding:24px 16px;text-align:center;cursor:pointer;
+        min-width:150px;padding:24px 16px;text-align:center;cursor:pointer;
         border:3px solid ${sel ? '#5f5' : '#444'};border-radius:4px;
         background:${sel ? 'rgba(80,255,80,0.15)' : 'rgba(255,255,255,0.05)'};
         transition:transform 0.15s;
         ${sel ? 'transform:scale(1.08);box-shadow:0 0 20px rgba(80,255,80,0.3);' : ''}
       `;
-      card.innerHTML = `<div style="font-size:22px;color:${sel ? '#5f5' : '#ccc'}">${t.name}</div>`;
+      card.innerHTML = `<div style="font-size:22px;color:${sel ? '#5f5' : '#ccc'};white-space:nowrap">${t.name}</div>`;
       card.onclick = () => { this.selectedMap = i; this._renderMapSelect(); };
       grid.appendChild(card);
     });
@@ -192,11 +192,18 @@ export class Menu {
         <h2 style="font-size:48px;color:${colors[Math.min(rank-1,3)]};text-shadow:3px 3px 0 #000;margin-bottom:40px">
           第 ${rank} 名！
         </h2>
-        <button id="btn-restart" style="${btnBase}">🔄 再来一局</button>
+        <div style="display:flex;gap:20px;justify-content:center">
+          <button id="btn-restart" style="${btnBase}">🔄 再来一局</button>
+          <button id="btn-home" style="${btnBase}">🏠 返回主菜单</button>
+        </div>
       </div>
     `;
-    const btn = this.el.querySelector('#btn-restart');
-    addBtnFx(btn);
-    btn.onclick = () => { this.hide(); onRestart(); };
+    const btnRestart = this.el.querySelector('#btn-restart');
+    addBtnFx(btnRestart);
+    btnRestart.onclick = () => { this.hide(); onRestart(); };
+
+    const btnHome = this.el.querySelector('#btn-home');
+    addBtnFx(btnHome);
+    btnHome.onclick = () => { this._renderMain(); };
   }
 }
