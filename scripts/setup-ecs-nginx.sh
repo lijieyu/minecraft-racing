@@ -48,6 +48,9 @@ server {
     listen 127.0.0.1:${LISTEN_PORT};
     server_name ${APP_HOST};
 
+    port_in_redirect off;
+    absolute_redirect off;
+
     location = ${BASE_PATH_NO_SLASH} {
         return 301 ${BASE_PATH};
     }
