@@ -9,13 +9,14 @@ import { HUD } from './hud.js';
 import { createSkybox } from './skybox.js';
 import { CHARACTERS } from './characters.js';
 import { startMusic, stopMusic } from './audio.js';
+import { TouchControls } from './touch.js';
 
 export class Game {
   constructor() {
     this.scene = null; this.camera = null; this.renderer = null; this.world = null;
     this.player = null; this.aiVehicles = []; this.aiControllers = [];
     this.allVehicles = []; this.weapons = null; this.particles = null;
-    this.hud = null; this.trackPoints = []; this.checkpoints = [];
+    this.hud = null; this.touch = null; this.trackPoints = []; this.checkpoints = [];
     this.itemBoxes = []; this.keys = {};
     this.totalLaps = 5; this.countdown = 3;
     this.raceStarted = false; this.raceFinished = false;
@@ -47,6 +48,9 @@ export class Game {
     this.particles = new ParticleSystem(this.scene);
     this.weapons = new WeaponSystem(this.scene, this.world, this.particles);
     this.hud = new HUD();
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      this.touch = new TouchControls(this);
+    }
     this._spawnVehicles(playerCharIdx);
     this._spawnItemBoxes();
     this._setupInput();
@@ -118,8 +122,8 @@ export class Game {
     canvas.width = 32; canvas.height = 32;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#ffcc00'; ctx.fillRect(0, 0, 32, 32);
-    ctx.fillStyle = '#cc8800'; ctx.fillRect(0,0,32,2); ctx.fillRect(0,30,32,2);
-    ctx.fillRect(0,0,2,32); ctx.fillRect(30,0,2,32);
+    ctx.fillStyle = '#cc8800'; ctx.fillRect(0, 0, 32, 2); ctx.fillRect(0, 30, 32, 2);
+    ctx.fillRect(0, 0, 2, 32); ctx.fillRect(30, 0, 2, 32);
     ctx.fillStyle = '#fff'; ctx.font = 'bold 22px monospace';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('?', 16, 17);
@@ -367,6 +371,7 @@ export class Game {
       this.renderer.dispose();
     }
     if (this.hud) this.hud.el.remove();
+    if (this.touch) this.touch.destroy();
     this.scene = null; this.world = null;
   }
 }

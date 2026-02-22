@@ -1,22 +1,74 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Minecraft Racing</title>
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body { overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
-canvas { display: block; }
-#ui-layer {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 10;
-}
-#ui-layer > * { pointer-events: auto; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minecraft Racing</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      overflow: hidden;
+      background: #000;
+      font-family: 'Courier New', monospace;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #ui-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #ui-layer>* {
+      pointer-events: auto;
+    }
+
+    # orientation-warning {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #111;
+      color: #fff;
+      z-index: 1000;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: sans-serif;
+    }
+
+    @media (orientation: portrait) {
+      #orientation-warning {
+        display: flex;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div id="ui-layer"></div>
-<script type="module" src="/src/main.js"></script>
+  <div id="ui-layer"></div>
+  <div id="orientation-warning">
+    <div style="font-size: 50px; margin-bottom: 20px;">📱🔄</div>
+    <div style="font-size: 20px; font-weight: bold; letter-spacing: 1px;">请旋转设备以横屏模式游玩</div>
+    <div style="font-size: 14px; color: #888; margin-top: 10px;">Please rotate your device to landscape</div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
 </body>
+
 </html>
