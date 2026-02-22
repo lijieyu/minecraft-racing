@@ -116,7 +116,7 @@ export class Menu {
     });
     const btn = this.el.querySelector('#btn-next');
     addBtnFx(btn);
-    btn.onclick = () => this._renderCharSelect();
+    btn.onclick = () => this._renderSpeedSelect();
   }
 
   _renderSpeedSelect() {
@@ -143,7 +143,7 @@ export class Menu {
     });
     const btn = this.el.querySelector('#btn-next');
     addBtnFx(btn);
-    btn.onclick = () => this._renderMapSelect();
+    btn.onclick = () => this._renderCharSelect();
   }
 
   _renderCharSelect() {
